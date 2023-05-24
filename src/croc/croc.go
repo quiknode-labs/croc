@@ -511,6 +511,32 @@ func (c *Client) transferOverLocalRelay(errchan chan<- error) {
 	errchan <- c.transfer()
 }
 
+func GetInterfaceIP(ifaceName string) (net.IP, error) {
+	iface, err := net.InterfaceByName(ifaceName)
+	if err != nil {
+		return nil, err
+	}
+
+	addrs, err := iface.Addrs()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, addr := range addrs {
+		ip, _, err := net.ParseCIDR(addr.String())
+		if err != nil {
+			continue
+		}
+
+		ipv4 := ip.To4()
+		if ipv4 != nil {
+			return ipv4, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no IPv4 address found for interface: %s", ifaceName)
+}
+
 // Send will send the specified file
 func (c *Client) Send(filesInfo []FileInfo, emptyFoldersToTransfer []FileInfo, totalNumberFolders int) (err error) {
 	c.EmptyFoldersToTransfer = emptyFoldersToTransfer
@@ -528,6 +554,13 @@ func (c *Client) Send(filesInfo []FileInfo, emptyFoldersToTransfer []FileInfo, t
 	if c.Options.RelayPassword != models.DEFAULT_PASSPHRASE {
 		flags.WriteString("--pass " + c.Options.RelayPassword + " ")
 	}
+
+	// Directly force the Tailscale IP address if available
+	ip, err := GetInterfaceIP("tailscale0")
+	if err == nil && ip != nil {
+		flags.WriteString("--ip " + ip.String() + " ")
+	}
+
 	fmt.Fprintf(os.Stderr, "Code is: %[1]s\nOn the other computer run\n\ncroc %[2]s%[1]s\n", c.Options.SharedSecret, flags.String())
 	if c.Options.Ask {
 		machid, _ := machineid.ID()
