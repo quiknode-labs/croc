@@ -801,6 +801,13 @@ func (c *Client) Receive() (err error) {
 		if err = json.Unmarshal(data, &ips); err != nil {
 			log.Debugf("ips unmarshal error: %v", err)
 		}
+
+		// Parse the CIDR block for Tailscale
+		var tailscaleNet *net.IPNet
+		_, tailscaleNet, err = net.ParseCIDR("100.64.0.0/10")
+		if err != nil {
+			return
+		}
 		if len(ips) > 1 {
 			port := ips[0]
 			ips = ips[1:]
@@ -812,7 +819,11 @@ func (c *Client) Receive() (err error) {
 				for _, localIP := range localIps {
 					localIPparsed := net.ParseIP(localIP)
 					log.Debugf("localIP: %+v, localIPparsed: %+v", localIP, localIPparsed)
-					if ipv4Net.Contains(localIPparsed) {
+					if tailscaleNet.Contains(localIPparsed) {
+						haveLocalIP = true
+						log.Debugf("ip: %+v is a Tailscale IP", ip)
+						break
+					} else if ipv4Net.Contains(localIPparsed) {
 						haveLocalIP = true
 						log.Debugf("ip: %+v is a local IP", ip)
 						break
