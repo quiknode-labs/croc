@@ -1,4 +1,23 @@
 
+# QuickNode Authorized Version
+
+**Public repo is not authorized to be used!**
+
+## Install
+
+Download the latest version from [releases](https://github.com/quiknode-labs/croc/releases)
+
+## Compile
+
+From a Mac M1
+
+```bash
+go build -o croc-macos
+GOOS=linux GOARCH=amd64 go build -o croc
+```
+
+# Public Version
+
 <p align="center">
 <img
     src="https://user-images.githubusercontent.com/6550035/46709024-9b23ad00-cbf6-11e8-9fb2-ca8b20b7dbec.jpg"
@@ -8,7 +27,7 @@
 <a href="https://coveralls.io/github/schollz/croc"><img src="https://img.shields.io/badge/coverage-81%25-green.svg?style=flat-square" alt="Coverage"></a>
 <a href="https://travis-ci.org/schollz/croc"><img
 src="https://img.shields.io/travis/schollz/croc.svg?style=flat-square" alt="Build
-Status"></a> 
+Status"></a>
 <p align="center">This project is supported by <a href="https://github.com/sponsors/schollz">Github sponsors</a>.</p>
 
 `croc` is a tool that allows any two computers to simply and securely transfer files and folders. AFAIK, *croc* is the only CLI file-transfer tool that does **all** of the following:
@@ -26,97 +45,9 @@ For more information about `croc`, see [my blog post](https://schollz.com/softwa
 
 ![Example](src/install/customization.gif)
 
-## Install
+## Usage
 
-Download [the latest release for your system](https://github.com/schollz/croc/releases/latest), or install a release from the command-line:
-
-```
-curl https://getcroc.schollz.com | bash
-```
-
-
-On macOS you can install the latest release with [Homebrew](https://brew.sh/): 
-
-```
-brew install croc
-```
-
-On macOS you can also install the latest release with [MacPorts](https://macports.org/): 
-
-```
-sudo port selfupdate
-sudo port install croc
-```
-
-On Windows you can install the latest release with [Scoop](https://scoop.sh/), [Chocolatey](https://chocolatey.org), or [Winget](https://learn.microsoft.com/en-us/windows/package-manager/): 
-
-```
-scoop install croc
-```
-
-```
-choco install croc
-```
-
-```
-winget install schollz.croc
-```
-
-On Unix you can install the latest release with [Nix](https://nixos.org/nix):
-
-```
-nix-env -i croc
-```
-
-
-On Alpine Linux you have to install dependencies first:
-
-```
-apk add bash coreutils
-wget -qO- https://getcroc.schollz.com | bash
-```
-
-On Arch Linux you can install the latest release with `pacman`:
-
-```
-pacman -S croc
-```
-
-On Fedora you can install with `dnf`:
-
-```
-dnf install croc
-```
-
-On Gentoo you can install with `portage`:
-```
-emerge net-misc/croc
-```
-
-On Termux you can install with `pkg`:
-
-```
-pkg install croc
-```
-
-On FreeBSD you can install with `pkg`:
-
-```
-pkg install croc
-```
-
-Or, you can [install Go](https://golang.org/dl/) and build from source (requires Go 1.17+): 
-
-```
-go install github.com/schollz/croc/v9@latest
-```
-
-On Android there is a 3rd party F-Droid app [available to download](https://f-droid.org/en/packages/com.github.howeyc.crocgui/).
-
-
-## Usage 
-
-To send a file, simply do: 
+To send a file, simply do:
 
 ```
 $ croc send [file(s)-or-folder]
@@ -124,7 +55,7 @@ Sending 'file-or-folder' (X MB)
 Code is: code-phrase
 ```
 
-Then to receive the file (or folder) on another computer, you can just do 
+Then to receive the file (or folder) on another computer, you can just do
 
 ```
 croc code-phrase
@@ -159,7 +90,7 @@ You can pipe to `croc`:
 cat [filename] | croc send
 ```
 
-In this case `croc` will automatically use the stdin data and send and assign a filename like "croc-stdin-123456789". To receive to `stdout` at you can always just use the `--yes`  will automatically approve the transfer and pipe it out to `stdout`. 
+In this case `croc` will automatically use the stdin data and send and assign a filename like "croc-stdin-123456789". To receive to `stdout` at you can always just use the `--yes`  will automatically approve the transfer and pipe it out to `stdout`.
 
 ```
 croc --yes [code-phrase] > out
@@ -168,7 +99,7 @@ croc --yes [code-phrase] > out
 All of the other text printed to the console is going to `stderr` so it will not interfere with the message going to `stdout`.
 
 
-### Send text 
+### Send text
 
 Sometimes you want to send URLs or short text. In addition to piping, you can easily send text with `croc`:
 
@@ -232,7 +163,7 @@ If it's easier you can also run a relay with Docker:
 docker run -d -p 9009-9013:9009-9013 -e CROC_PASS='YOURPASSWORD' schollz/croc
 ```
 
-Be sure to include the password for the relay otherwise any requests will be rejected. 
+Be sure to include the password for the relay otherwise any requests will be rejected.
 
 ```
 croc --pass YOURPASSWORD --relay "myreal.example.com:9009" send [filename]
