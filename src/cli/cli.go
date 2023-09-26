@@ -36,7 +36,7 @@ func Run() (err error) {
 	app := cli.NewApp()
 	app.Name = "croc"
 	if Version == "" {
-		Version = "v9.6.4-qn1"
+		Version = "v9.6.4-qn2"
 	}
 	app.Version = Version
 	app.Compiled = time.Now()
@@ -66,11 +66,12 @@ func Run() (err error) {
 			Flags: []cli.Flag{
 				&cli.BoolFlag{Name: "zip", Usage: "zip folder before sending"},
 				&cli.StringFlag{Name: "code", Aliases: []string{"c"}, Usage: "codephrase used to connect to relay"},
-				&cli.StringFlag{Name: "hash", Value: "xxhash", Usage: "hash algorithm (xxhash, imohash, md5)"},
+				&cli.StringFlag{Name: "hash", Value: "imohash", Usage: "hash algorithm (xxhash, imohash, md5)"},
 				&cli.StringFlag{Name: "text", Aliases: []string{"t"}, Usage: "send some text"},
-				&cli.BoolFlag{Name: "no-local", Usage: "disable local relay when sending"},
+				//&cli.BoolFlag{Name: "no-local", Usage: "disable local relay when sending"},
 				&cli.BoolFlag{Name: "no-multi", Usage: "disable multiplexing"},
-				&cli.StringFlag{Name: "ports", Value: "9009,9010,9011,9012,9013", Usage: "ports of the local relay (optional)"},
+				&cli.IntFlag{Name: "port", Value: 9009, Usage: "base port for the relay"},
+				&cli.IntFlag{Name: "transfers", Value: 4, Usage: "number of ports to use for transfers"},
 			},
 			HelpName: "croc send",
 			Action:   send,
@@ -83,7 +84,8 @@ func Run() (err error) {
 			Action:      relay,
 			Flags: []cli.Flag{
 				&cli.StringFlag{Name: "host", Usage: "host of the relay"},
-				&cli.StringFlag{Name: "ports", Value: "9009,9010,9011,9012,9013", Usage: "ports of the relay"},
+				&cli.IntFlag{Name: "port", Value: 9009, Usage: "base port for the relay"},
+				&cli.IntFlag{Name: "transfers", Value: 4, Usage: "number of ports to use for transfers"},
 			},
 		},
 	}
@@ -95,12 +97,14 @@ func Run() (err error) {
 		&cli.BoolFlag{Name: "stdout", Usage: "redirect file to stdout"},
 		&cli.BoolFlag{Name: "no-compress", Usage: "disable compression"},
 		&cli.BoolFlag{Name: "ask", Usage: "make sure sender and recipient are prompted"},
-		&cli.BoolFlag{Name: "local", Usage: "force to use only local connections"},
+		//&cli.BoolFlag{Name: "local", Usage: "force to use only local connections"},
 		&cli.BoolFlag{Name: "ignore-stdin", Usage: "ignore piped stdin"},
 		&cli.BoolFlag{Name: "overwrite", Usage: "do not prompt to overwrite"},
 		&cli.BoolFlag{Name: "testing", Usage: "flag for testing purposes"},
 		&cli.StringFlag{Name: "curve", Value: "p256", Usage: "choose an encryption curve (" + strings.Join(pake.AvailableCurves(), ", ") + ")"},
 		&cli.StringFlag{Name: "ip", Value: "", Usage: "set sender ip if known e.g. 10.0.0.1:9009, [::1]:9009"},
+		&cli.StringFlag{Name: "relay", Value: models.DEFAULT_RELAY, Usage: "address of the relay", EnvVars: []string{"CROC_RELAY"}},
+		&cli.StringFlag{Name: "relay6", Value: models.DEFAULT_RELAY6, Usage: "ipv6 address of the relay", EnvVars: []string{"CROC_RELAY6"}},
 		&cli.StringFlag{Name: "out", Value: ".", Usage: "specify an output folder to receive the file"},
 		&cli.StringFlag{Name: "pass", Value: models.DEFAULT_PASSPHRASE, Usage: "password for the relay", EnvVars: []string{"CROC_PASS"}},
 		&cli.StringFlag{Name: "socks5", Value: "", Usage: "add a socks5 proxy", EnvVars: []string{"SOCKS5_PROXY"}},
@@ -170,10 +174,15 @@ func send(c *cli.Context) (err error) {
 	setDebugLevel(c)
 	comm.Socks5Proxy = c.String("socks5")
 	comm.HttpProxy = c.String("connect")
-	portsString := c.String("ports")
-	if portsString == "" {
-		portsString = "9009,9010,9011,9012,9013"
+	portString := c.Int("port")
+	if portString == 0 {
+		portString = 9009
 	}
+	transfersString := c.Int("transfers")
+	if transfersString == 0 {
+		transfersString = 4
+	}
+
 	crocOptions := croc.Options{
 		SharedSecret:   c.String("code"),
 		IsSender:       true,
@@ -182,10 +191,11 @@ func send(c *cli.Context) (err error) {
 		RelayAddress:   c.String("relay"),
 		RelayAddress6:  c.String("relay6"),
 		Stdout:         c.Bool("stdout"),
-		DisableLocal:   c.Bool("no-local"),
-		OnlyLocal:      true, // c.Bool("local"),
+		DisableLocal:   false, // c.Bool("no-local"),
+		OnlyLocal:      true,  // c.Bool("local"),
 		IgnoreStdin:    c.Bool("ignore-stdin"),
-		RelayPorts:     strings.Split(portsString, ","),
+		BasePort:       portString,
+		TransferPorts:  transfersString,
 		Ask:            c.Bool("ask"),
 		NoMultiplexing: c.Bool("no-multi"),
 		RelayPassword:  determinePass(c),
@@ -217,8 +227,11 @@ func send(c *cli.Context) (err error) {
 		if !c.IsSet("no-local") {
 			crocOptions.DisableLocal = rememberedOptions.DisableLocal
 		}
-		if !c.IsSet("ports") && len(rememberedOptions.RelayPorts) > 0 {
-			crocOptions.RelayPorts = rememberedOptions.RelayPorts
+		if !c.IsSet("port") && rememberedOptions.BasePort > 0 {
+			crocOptions.BasePort = rememberedOptions.BasePort
+		}
+		if !c.IsSet("transfers") && rememberedOptions.TransferPorts > 0 {
+			crocOptions.TransferPorts = rememberedOptions.TransferPorts
 		}
 		if !c.IsSet("code") {
 			crocOptions.SharedSecret = rememberedOptions.SharedSecret
