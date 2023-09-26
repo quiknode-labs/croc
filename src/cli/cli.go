@@ -36,7 +36,7 @@ func Run() (err error) {
 	app := cli.NewApp()
 	app.Name = "croc"
 	if Version == "" {
-		Version = "v9.6.4-qn2"
+		Version = "v9.6.5-qn1"
 	}
 	app.Version = Version
 	app.Compiled = time.Now()
@@ -44,6 +44,7 @@ func Run() (err error) {
 	app.UsageText = `Send a file:
       croc send file.txt
 
+      -git to respect your .gitignore
    Send multiple files:
       croc send file1.txt file2.txt file3.txt
     or
@@ -72,6 +73,7 @@ func Run() (err error) {
 				&cli.BoolFlag{Name: "no-multi", Usage: "disable multiplexing"},
 				&cli.IntFlag{Name: "port", Value: 9009, Usage: "base port for the relay"},
 				&cli.IntFlag{Name: "transfers", Value: 4, Usage: "number of ports to use for transfers"},
+				&cli.BoolFlag{Name: "git", Usage: "enable .gitignore respect / don't send ignored files"},
 			},
 			HelpName: "croc send",
 			Action:   send,
@@ -206,6 +208,7 @@ func send(c *cli.Context) (err error) {
 		HashAlgorithm:  c.String("hash"),
 		ThrottleUpload: c.String("throttleUpload"),
 		ZipFolder:      c.Bool("zip"),
+		GitIgnore:      c.Bool("git"),
 	}
 	if crocOptions.RelayAddress != models.DEFAULT_RELAY {
 		crocOptions.RelayAddress6 = ""
@@ -254,6 +257,9 @@ func send(c *cli.Context) (err error) {
 		if !c.IsSet("hash") {
 			crocOptions.HashAlgorithm = rememberedOptions.HashAlgorithm
 		}
+		if !c.IsSet("git") {
+			crocOptions.GitIgnore = rememberedOptions.GitIgnore
+		}
 	}
 
 	var fnames []string
@@ -292,7 +298,7 @@ func send(c *cli.Context) (err error) {
 		// generate code phrase
 		crocOptions.SharedSecret = utils.GetRandomName()
 	}
-	minimalFileInfos, emptyFoldersToTransfer, totalNumberFolders, err := croc.GetFilesInfo(fnames, crocOptions.ZipFolder)
+	minimalFileInfos, emptyFoldersToTransfer, totalNumberFolders, err := croc.GetFilesInfo(fnames, crocOptions.ZipFolder, crocOptions.GitIgnore)
 	if err != nil {
 		return
 	}
