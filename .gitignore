@@ -1,7 +1,8 @@
 # Binaries
 /croc
 /croc.exe
-/croc-*
+/croc-linux
+/croc-macos
 zsh_autocomplete
 bash_autocomplete
 dist
