@@ -13,7 +13,7 @@ From a Mac M1
 
 ```bash
 go build -o croc-macos
-GOOS=linux GOARCH=amd64 go build -o croc
+GOOS=linux GOARCH=amd64 go build -o croc-linux
 ```
 
 # Public Version
