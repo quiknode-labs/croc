@@ -661,6 +661,34 @@ func GetInterfaceIP(ifaceName string) (net.IP, error) {
 	return nil, fmt.Errorf("no IPv4 address found for interface: %s", ifaceName)
 }
 
+func GetTailscaleIP() (net.IP, error) {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return nil, err
+	}
+	// Tailscale IPs are in the 100.64.0.0/10 range
+	_, tailscaleNet, _ := net.ParseCIDR("100.64.0.0/10")
+	for _, i := range ifaces {
+		addrs, err := i.Addrs()
+		if err != nil {
+			return nil, err
+		}
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			if ip != nil && tailscaleNet.Contains(ip) {
+				return ip, nil
+			}
+		}
+	}
+	return nil, fmt.Errorf("no Tailscale IP found")
+}
+
 // Send will send the specified file
 func (c *Client) Send(filesInfo []FileInfo, emptyFoldersToTransfer []FileInfo, totalNumberFolders int) (err error) {
 	c.EmptyFoldersToTransfer = emptyFoldersToTransfer
@@ -679,12 +707,15 @@ func (c *Client) Send(filesInfo []FileInfo, emptyFoldersToTransfer []FileInfo, t
 	}
 
 	// Directly force the Tailscale IP address if available
-	ip, err := GetInterfaceIP("tailscale0")
+	ip, err := GetTailscaleIP()
 	if err == nil && ip != nil {
 		flags.WriteString("--ip " + ip.String() + " ")
 	}
 
 	fmt.Fprintf(os.Stderr, "Code is: %[1]s\nOn the other computer run\n\ncroc %[2]s%[1]s\n", c.Options.SharedSecret, flags.String())
+	fmt.Fprintf(os.Stderr, "\nDon't have croc on the receive side? Run:\n")
+	fmt.Fprintf(os.Stderr, "-- MacOS:\nsudo sh -c \"curl -sL $(curl -s https://api.github.com/repos/quiknode-labs/croc/releases/latest | jq -r '.assets[].browser_download_url' | grep 'macos') -o /usr/local/bin/croc && chmod +x /usr/local/bin/croc\"\n")
+	fmt.Fprintf(os.Stderr, "-- Linux:\nsudo sh -c \"curl -sL $(curl -s https://api.github.com/repos/quiknode-labs/croc/releases/latest | jq -r '.assets[].browser_download_url' | grep -v 'macos') -o /usr/local/bin/croc && chmod +x /usr/local/bin/croc\"\n")
 	if c.Options.Ask {
 		machid, _ := machineid.ID()
 		fmt.Fprintf(os.Stderr, "\rYour machine ID is '%s'\n", machid)

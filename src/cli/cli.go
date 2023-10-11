@@ -36,7 +36,7 @@ func Run() (err error) {
 	app := cli.NewApp()
 	app.Name = "croc"
 	if Version == "" {
-		Version = "v9.6.5-qn1"
+		Version = "v9.6.5-qn4"
 	}
 	app.Version = Version
 	app.Compiled = time.Now()
@@ -72,7 +72,7 @@ func Run() (err error) {
 				//&cli.BoolFlag{Name: "no-local", Usage: "disable local relay when sending"},
 				&cli.BoolFlag{Name: "no-multi", Usage: "disable multiplexing"},
 				&cli.IntFlag{Name: "port", Value: 9009, Usage: "base port for the relay"},
-				&cli.IntFlag{Name: "transfers", Value: 4, Usage: "number of ports to use for transfers"},
+				&cli.IntFlag{Name: "transfers", Value: 10, Usage: "number of ports to use for transfers"},
 				&cli.BoolFlag{Name: "git", Usage: "enable .gitignore respect / don't send ignored files"},
 			},
 			HelpName: "croc send",
