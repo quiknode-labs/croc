@@ -5,8 +5,12 @@
 
 ## Install
 
-Download the latest version from [releases](https://github.com/quiknode-labs/croc/releases)
+* macOS
+  * `sudo sh -c "curl -sL $(curl -s https://api.github.com/repos/quiknode-labs/croc/releases/latest | jq -r '.assets[].browser_download_url' | grep 'croc-macos') -o /usr/local/bin/croc && chmod +x /usr/local/bin/croc"`
+* Linux
+  * `sudo sh -c "curl -sL $(curl -s https://api.github.com/repos/quiknode-labs/croc/releases/latest | jq -r '.assets[].browser_download_url' | grep 'croc-linux') -o /usr/local/bin/croc && chmod +x /usr/local/bin/croc"`
 
+You can also download the latest version from [releases](https://github.com/quiknode-labs/croc/releases)
 ## Compile
 
 From a Mac M1

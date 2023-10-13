@@ -714,7 +714,7 @@ func (c *Client) Send(filesInfo []FileInfo, emptyFoldersToTransfer []FileInfo, t
 
 	fmt.Fprintf(os.Stderr, "Code is: %[1]s\nOn the other computer run\n\ncroc %[2]s%[1]s\n", c.Options.SharedSecret, flags.String())
 	fmt.Fprintf(os.Stderr, "\nDon't have croc on the receive side? Run:\n")
-	fmt.Fprintf(os.Stderr, "-- MacOS:\nsudo sh -c \"curl -sL $(curl -s https://api.github.com/repos/quiknode-labs/croc/releases/latest | jq -r '.assets[].browser_download_url' | grep 'croc-macos') -o /usr/local/bin/croc && chmod +x /usr/local/bin/croc\"\n")
+	fmt.Fprintf(os.Stderr, "-- macOS:\nsudo sh -c \"curl -sL $(curl -s https://api.github.com/repos/quiknode-labs/croc/releases/latest | jq -r '.assets[].browser_download_url' | grep 'croc-macos') -o /usr/local/bin/croc && chmod +x /usr/local/bin/croc\"\n")
 	fmt.Fprintf(os.Stderr, "-- Linux:\nsudo sh -c \"curl -sL $(curl -s https://api.github.com/repos/quiknode-labs/croc/releases/latest | jq -r '.assets[].browser_download_url' | grep 'croc-linux') -o /usr/local/bin/croc && chmod +x /usr/local/bin/croc\"\n")
 	if c.Options.Ask {
 		machid, _ := machineid.ID()
