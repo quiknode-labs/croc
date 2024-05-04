@@ -244,11 +244,8 @@ func send(c *cli.Context) (err error) {
 		if !c.IsSet("no-local") {
 			crocOptions.DisableLocal = rememberedOptions.DisableLocal
 		}
-		if !c.IsSet("port") && rememberedOptions.BasePort > 0 {
-			crocOptions.BasePort = rememberedOptions.BasePort
-		}
-		if !c.IsSet("transfers") && rememberedOptions.TransferPorts > 0 {
-			crocOptions.TransferPorts = rememberedOptions.TransferPorts
+		if !c.IsSet("ports") && len(rememberedOptions.RelayPorts) > 0 {
+			crocOptions.RelayPorts = rememberedOptions.RelayPorts
 		}
 		if !c.IsSet("code") {
 			crocOptions.SharedSecret = rememberedOptions.SharedSecret
