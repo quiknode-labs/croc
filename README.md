@@ -1,7 +1,7 @@
 
 # QuickNode Authorized Version
 
-**Public repo is not authorized to be used!**
+**The `schollz/croc` repo is not authorized to be used!**
 
 ## Install
 
@@ -27,7 +27,7 @@ GOOS=linux GOARCH=amd64 go build -o croc-linux
     src="https://user-images.githubusercontent.com/6550035/46709024-9b23ad00-cbf6-11e8-9fb2-ca8b20b7dbec.jpg"
     width="408px" border="0" alt="croc">
 <br>
-<a href="https://github.com/schollz/croc/releases/latest"><img src="https://img.shields.io/badge/version-v9.6.5-brightgreen.svg?style=flat-square" alt="Version"></a>
+<a href="https://github.com/schollz/croc/releases/latest"><img src="https://img.shields.io/badge/version-v9.6.15-brightgreen.svg?style=flat-square" alt="Version"></a>
 <a href="https://coveralls.io/github/schollz/croc"><img src="https://img.shields.io/badge/coverage-81%25-green.svg?style=flat-square" alt="Coverage"></a>
 <a href="https://travis-ci.org/schollz/croc"><img
 src="https://img.shields.io/travis/schollz/croc.svg?style=flat-square" alt="Build
@@ -148,7 +148,7 @@ The relay is needed to staple the parallel incoming and outgoing connections. By
 croc relay
 ```
 
-By default it uses TCP ports 9009-9013. Make sure to open those up. You can customized the ports (e.g. `croc relay --ports 1111,1112`), but you must have a minimum of **2** ports for the relay. The first port is for communication and the subsequent ports are used for the multiplexed data transfer.
+By default it uses TCP ports 9009-9013. Make sure to open those up. You can customize the ports (e.g. `croc relay --ports 1111,1112`), but you must have a minimum of **2** ports for the relay. The first port is for communication and the subsequent ports are used for the multiplexed data transfer.
 
 You can send files using your relay by entering `--relay` to change the relay that you are using if you want to custom host your own.
 

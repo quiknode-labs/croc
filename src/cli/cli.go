@@ -36,7 +36,7 @@ func Run() (err error) {
 	app := cli.NewApp()
 	app.Name = "croc"
 	if Version == "" {
-		Version = "v9.6.5-qn5"
+		Version = "v9.6.15-qn1"
 	}
 	app.Version = Version
 	app.Compiled = time.Now()
@@ -71,9 +71,9 @@ func Run() (err error) {
 				&cli.StringFlag{Name: "text", Aliases: []string{"t"}, Usage: "send some text"},
 				//&cli.BoolFlag{Name: "no-local", Usage: "disable local relay when sending"},
 				&cli.BoolFlag{Name: "no-multi", Usage: "disable multiplexing"},
+				&cli.BoolFlag{Name: "git", Usage: "enable .gitignore respect / don't send ignored files"},
 				&cli.IntFlag{Name: "port", Value: 9009, Usage: "base port for the relay"},
 				&cli.IntFlag{Name: "transfers", Value: 10, Usage: "number of ports to use for transfers"},
-				&cli.BoolFlag{Name: "git", Usage: "enable .gitignore respect / don't send ignored files"},
 			},
 			HelpName: "croc send",
 			Action:   send,
@@ -154,13 +154,22 @@ func setDebugLevel(c *cli.Context) {
 	}
 }
 
-func getConfigFile() string {
-	configFile, err := utils.GetConfigDir()
+func getSendConfigFile(requireValidPath bool) string {
+	configFile, err := utils.GetConfigDir(requireValidPath)
 	if err != nil {
 		log.Error(err)
 		return ""
 	}
 	return path.Join(configFile, "send.json")
+}
+
+func getReceiveConfigFile(requireValidPath bool) (string, error) {
+	configFile, err := utils.GetConfigDir(requireValidPath)
+	if err != nil {
+		log.Error(err)
+		return "", err
+	}
+	return path.Join(configFile, "receive.json"), nil
 }
 
 func determinePass(c *cli.Context) (pass string) {
@@ -176,13 +185,19 @@ func send(c *cli.Context) (err error) {
 	setDebugLevel(c)
 	comm.Socks5Proxy = c.String("socks5")
 	comm.HttpProxy = c.String("connect")
-	portString := c.Int("port")
-	if portString == 0 {
-		portString = 9009
+
+	portParam := c.Int("port")
+	if portParam == 0 {
+		portParam = 9009
 	}
-	transfersString := c.Int("transfers")
-	if transfersString == 0 {
-		transfersString = 4
+	transfersParam := c.Int("transfers")
+	if transfersParam == 0 {
+		transfersParam = 10
+	}
+
+	ports := make([]string, transfersParam+1)
+	for i := 0; i <= transfersParam; i++ {
+		ports[i] = strconv.Itoa(portParam + i)
 	}
 
 	crocOptions := croc.Options{
@@ -196,8 +211,7 @@ func send(c *cli.Context) (err error) {
 		DisableLocal:   false, // c.Bool("no-local"),
 		OnlyLocal:      true,  // c.Bool("local"),
 		IgnoreStdin:    c.Bool("ignore-stdin"),
-		BasePort:       portString,
-		TransferPorts:  transfersString,
+		RelayPorts:     ports,
 		Ask:            c.Bool("ask"),
 		NoMultiplexing: c.Bool("no-multi"),
 		RelayPassword:  determinePass(c),
@@ -215,7 +229,7 @@ func send(c *cli.Context) (err error) {
 	} else if crocOptions.RelayAddress6 != models.DEFAULT_RELAY6 {
 		crocOptions.RelayAddress = ""
 	}
-	b, errOpen := os.ReadFile(getConfigFile())
+	b, errOpen := os.ReadFile(getSendConfigFile(false))
 	if errOpen == nil && !c.Bool("remember") {
 		var rememberedOptions croc.Options
 		err = json.Unmarshal(b, &rememberedOptions)
@@ -354,7 +368,7 @@ func makeTempFileWithString(s string) (fnames []string, err error) {
 
 func saveConfig(c *cli.Context, crocOptions croc.Options) {
 	if c.Bool("remember") {
-		configFile := getConfigFile()
+		configFile := getSendConfigFile(true)
 		log.Debug("saving config file")
 		var bConfig []byte
 		// if the code wasn't set, don't save it
@@ -434,6 +448,8 @@ func receive(c *cli.Context) (err error) {
 	case 1:
 		crocOptions.SharedSecret = c.Args().First()
 	case 3:
+		fallthrough
+	case 4:
 		var phrase []string
 		phrase = append(phrase, c.Args().First())
 		phrase = append(phrase, c.Args().Tail()...)
@@ -442,14 +458,14 @@ func receive(c *cli.Context) (err error) {
 
 	// load options here
 	setDebugLevel(c)
-	configFile, err := utils.GetConfigDir()
-	if err != nil {
-		log.Error(err)
+
+	doRemember := c.Bool("remember")
+	configFile, err := getReceiveConfigFile(doRemember)
+	if err != nil && doRemember {
 		return
 	}
-	configFile = path.Join(configFile, "receive.json")
 	b, errOpen := os.ReadFile(configFile)
-	if errOpen == nil && !c.Bool("remember") {
+	if errOpen == nil && !doRemember {
 		var rememberedOptions croc.Options
 		err = json.Unmarshal(b, &rememberedOptions)
 		if err != nil {
@@ -508,7 +524,7 @@ func receive(c *cli.Context) (err error) {
 	}
 
 	// save the config
-	if c.Bool("remember") {
+	if doRemember {
 		log.Debug("saving config file")
 		var bConfig []byte
 		bConfig, err = json.MarshalIndent(crocOptions, "", "    ")

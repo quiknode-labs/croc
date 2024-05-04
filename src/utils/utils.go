@@ -31,22 +31,27 @@ const NbPinNumbers = 4
 const NbBytesWords = 4
 
 // Get or create home directory
-func GetConfigDir() (homedir string, err error) {
-	homedir, err = os.UserHomeDir()
-	if err != nil {
-		return
-	}
-
+func GetConfigDir(requireValidPath bool) (homedir string, err error) {
 	if envHomedir, isSet := os.LookupEnv("CROC_CONFIG_DIR"); isSet {
 		homedir = envHomedir
 	} else if xdgConfigHome, isSet := os.LookupEnv("XDG_CONFIG_HOME"); isSet {
 		homedir = path.Join(xdgConfigHome, "croc")
 	} else {
+		homedir, err = os.UserHomeDir()
+		if err != nil {
+			if !requireValidPath {
+				err = nil
+				homedir = ""
+			}
+			return
+		}
 		homedir = path.Join(homedir, ".config", "croc")
 	}
 
-	if _, err = os.Stat(homedir); os.IsNotExist(err) {
-		err = os.MkdirAll(homedir, 0o700)
+	if requireValidPath {
+		if _, err = os.Stat(homedir); os.IsNotExist(err) {
+			err = os.MkdirAll(homedir, 0o700)
+		}
 	}
 	return
 }
